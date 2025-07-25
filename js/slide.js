@@ -1,3 +1,5 @@
+import debounce from "./debounce.js";
+
 export default class Slide {
   constructor(slide, wrapper) {
     this.slide = document.querySelector(slide);
@@ -7,6 +9,7 @@ export default class Slide {
       startX: 0,
       movement: 0,
     };
+    this.activeClass = "active";
   }
   transition(active) {
     this.slide.style.transition = active ? "transform .3s" : "";
@@ -65,13 +68,7 @@ export default class Slide {
     this.wrapper.addEventListener("mouseup", this.onEnd);
     this.wrapper.addEventListener("touchend", this.touchEnd);
   }
-  bindEvents() {
-    this.onStart = this.onStart.bind(this);
-    this.onMove = this.onMove.bind(this);
-    this.onEnd = this.onEnd.bind(this);
-    this.touchStart = this.touchStart.bind(this);
-    this.touchEnd = this.touchEnd.bind(this);
-  }
+
   //Configurações do slide
   slidePosition(slide) {
     const margin = (this.wrapper.offsetWidth - slide.offsetWidth) / 2;
@@ -96,6 +93,13 @@ export default class Slide {
     this.moveSlide(activeSlide.position);
     this.slidesIndexNav(index);
     this.dist.finalPosition = activeSlide.position;
+    this.changeActiveClass();
+  }
+  changeActiveClass() {
+    this.slideArray.forEach((item) =>
+      item.element.classList.remove(this.activeClass),
+    );
+    this.slideArray[this.index.active].element.classList.add(this.activeClass);
   }
   activePrevSlide() {
     if (this.index.prev !== undefined) {
@@ -107,11 +111,29 @@ export default class Slide {
       this.changeSlide(this.index.next);
     }
   }
+  onResize() {
+    setTimeout(() => {
+      this.slidesConfig();
+      this.changeSlide(this.index.active);
+    }, 1000);
+  }
+  addResizeEvent() {
+    window.addEventListener("resize", this.onResize);
+  }
+  bindEvents() {
+    this.onStart = this.onStart.bind(this);
+    this.onMove = this.onMove.bind(this);
+    this.onEnd = this.onEnd.bind(this);
+    this.touchStart = this.touchStart.bind(this);
+    this.touchEnd = this.touchEnd.bind(this);
+    this.onResize = debounce(this.onResize.bind(this), 200);
+  }
   init() {
     this.bindEvents();
     this.transition(true);
     this.slidesConfig();
     this.addSlideEvents();
+    this.addResizeEvent();
     return this;
   }
 }
